@@ -1,0 +1,55 @@
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local Camera = game.Workspace.CurrentCamera
+
+local LocalPlayer = Players.LocalPlayer
+local TargetPlayer = nil -- Change this to your desired target or make a way to select one
+local CamLocked = false
+
+-- Function to find a target (Closest Player Example)
+local function getClosestPlayer()
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local targetHRP = player.Character.HumanoidRootPart
+            local distance = (targetHRP.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+            
+            if distance < shortestDistance then
+                shortestDistance = distance
+                closestPlayer = player
+            end
+        end
+    end
+    return closestPlayer
+end
+
+-- Function to update camera
+local function updateCamera()
+    if CamLocked and TargetPlayer and TargetPlayer.Character and TargetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local targetHRP = TargetPlayer.Character.HumanoidRootPart
+        Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetHRP.Position)
+    end
+end
+
+-- Detect right-click hold
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        TargetPlayer = getClosestPlayer()
+        if TargetPlayer then
+            CamLocked = true
+        end
+    end
+end)
+
+-- Detect right-click release
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        CamLocked = false
+    end
+end)
+
+-- Run camera update loop
+RunService.RenderStepped:Connect(updateCamera)
